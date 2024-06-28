@@ -13,12 +13,13 @@ let initialMatrix = [
 ];
 let currentPlayer;
 
-const generateRandomNumber = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+const generateRandomNumber = (min, max) =>
+  Math.floor(Math.random() * (max - min)) + min;
 
 const verifyArray = (arrayElement) => {
   let bool = false;
   let elementCount = 0;
-  arrayElement.forEach((element) => {
+  arrayElement.forEach((element, index) => {
     if (element == currentPlayer) {
       elementCount += 1;
       if (elementCount == 4) {
@@ -46,12 +47,14 @@ const gameOverCheck = () => {
   }
 };
 
-const checkAdjacentRowValues = (row) => verifyArray(initialMatrix[row]);
+const checkAdjacentRowValues = (row) => {
+  return verifyArray(initialMatrix[row]);
+};
 
 const checkAdjacentColumnValues = (column) => {
-  let colWinCount = 0;
-  let colWinBool = false;
-  initialMatrix.forEach((element) => {
+  let colWinCount = 0,
+    colWinBool = false;
+  initialMatrix.forEach((element, index) => {
     if (element[column] == currentPlayer) {
       colWinCount += 1;
       if (colWinCount == 4) {
@@ -64,8 +67,87 @@ const checkAdjacentColumnValues = (column) => {
   return colWinBool;
 };
 
+const getRightDiagonal = (row, column, rowLength, columnLength) => {
+  let rowCount = row;
+  let columnCount = column;
+  let rightDiagonal = [];
+  while (rowCount > 0) {
+    if (columnCount >= columnLength - 1) {
+      break;
+    }
+    rowCount -= 1;
+    columnCount += 1;
+    rightDiagonal.unshift(initialMatrix[rowCount][columnCount]);
+  }
+  rowCount = row;
+  columnCount = column;
+  while (rowCount < rowLength) {
+    if (columnCount < 0) {
+      break;
+    }
+    rightDiagonal.push(initialMatrix[rowCount][columnCount]);
+    rowCount += 1;
+    columnCount -= 1;
+  }
+  return rightDiagonal;
+};
+
+const getLeftDiagonal = (row, column, rowLength, columnLength) => {
+  let rowCount = row;
+  let columnCount = column;
+  let leftDiagonal = [];
+  while (rowCount > 0) {
+    if (columnCount <= 0) {
+      break;
+    }
+    rowCount -= 1;
+    columnCount -= 1;
+    leftDiagonal.unshift(initialMatrix[rowCount][columnCount]);
+  }
+  rowCount = row;
+  columnCount = column;
+  while (rowCount < rowLength) {
+    if (columnCount >= columnLength) {
+      break;
+    }
+    leftDiagonal.push(initialMatrix[rowCount][columnCount]);
+    rowCount += 1;
+    columnCount += 1;
+  }
+  return leftDiagonal;
+};
+
+const checkAdjacentDiagonalValues = (row, column) => {
+  let diagWinBool = false;
+  let tempChecks = {
+    leftTop: [],
+    rightTop: [],
+  };
+  let columnLength = initialMatrix[row].length;
+  let rowLength = initialMatrix.length;
+
+  tempChecks.leftTop = [
+    ...getLeftDiagonal(row, column, rowLength, columnLength),
+  ];
+
+  tempChecks.rightTop = [
+    ...getRightDiagonal(row, column, rowLength, columnLength),
+  ];
+  diagWinBool = verifyArray(tempChecks.rightTop);
+  if (!diagWinBool) {
+    diagWinBool = verifyArray(tempChecks.leftTop);
+  }
+  return diagWinBool;
+};
+
 const winCheck = (row, column) => {
-  return checkAdjacentRowValues(row) ? true : checkAdjacentColumnValues(column) ? true : false;
+  return checkAdjacentRowValues(row)
+    ? true
+    : checkAdjacentColumnValues(column)
+    ? true
+    : checkAdjacentDiagonalValues(row, column)
+    ? true
+    : false;
 };
 
 const setPiece = (startCount, colValue) => {
@@ -90,6 +172,7 @@ const fillBox = (e) => {
   let colValue = parseInt(e.target.getAttribute("data-value"));
   setPiece(5, colValue);
   currentPlayer = currentPlayer == 1 ? 2 : 1;
+
   playerTurn.innerHTML = `Player <span>${currentPlayer}'s</span> turn`;
 };
 
